@@ -1,7 +1,5 @@
 /*
-** $Id$
-**
-** Copyright (C) 2004 - Hagen Paul Pfeifer <hagen@jauu.net>
+** Copyright (C) 2008 - Hagen Paul Pfeifer <hagen@jauu.net>
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -18,29 +16,12 @@
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <inttypes.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <string.h>
-#include <unistd.h>
-#include <time.h>
-#include <sys/stat.h>
+#include "cfga.h"
 
-#define	SINGLE_POINT_CROSSOVER 1
-#define	TWO_POINT_CROSSOVER    2
-#define	UNIFORM_CROSSOVER      3
-#define	ARITHMETIC_CROSSOVER   4
-#define	BINARY_ENCODING_CROSSOVER_MODE SINGLE_POINT_CROSSOVER
 
-const char target_text[] = "xxxxx";
-
-#define	POPULATION_SIZE 100
+const char target_text[] = "xxxxxxxx";
 
 #define	RANDOMFILE "/dev/urandom"
-
-#define	VERBOSE_LEVEL 1
 
 struct entity {
 	char *chromosome;
@@ -48,13 +29,13 @@ struct entity {
 };
 
 
-static void die(const char const *msg)
+void die(const char const *msg)
 {
 	fprintf(stderr, "%s\n", msg);
 	exit(1);
 }
 
-static void *xalloc(size_t size)
+void *xalloc(size_t size)
 {
 	void *ptr;
 
@@ -193,19 +174,81 @@ static void print_current_fittest(struct entity **entities)
 	fprintf(stderr, "current fittest: %s (%u)\n", fittest, current_fittest);
 }
 
-#define	FIRST 0
-#define	SECOND 1
+#define	POS_FIRST  0
+#define	POS_SECOND 1
+#define	POS_VALUE  0
+#define	POS_RANK   1
 
-#define	POS_VAL  0
-#define	POS_RANK 1
+static void select_best_first_two(struct entity **entities, char **top_chromosomes)
+{
+	uint8_t fittest_value = 0;
+	uint16_t i, j, last_parent_marker;
+	unsigned int fittest_count = 0;
+	char **chromosome_fittest_ring;
 
-static void select_best_two(struct entity **entities, char **top_chromosomes)
+	top_chromosomes[0] = xalloc(strlen(target_text) + 1);
+	top_chromosomes[1] = xalloc(strlen(target_text) + 1);
+
+	/* search fittest rank value */
+	for (i = 0; i < POPULATION_SIZE; i++) {
+		if (entities[i]->fitness > fittest_value)
+			fittest_value = entities[i]->fitness;
+	}
+
+	/* count how many fittest with value fittest_value we had */
+	fittest_count = 0;
+	for (i = 0; i < POPULATION_SIZE; i++) {
+		if (entities[i]->fitness == fittest_value)
+			fittest_count++;
+	}
+
+	if (VERBOSE_LEVEL >= 2)
+		fprintf(stderr, "found %u fittest\n", fittest_count);
+
+	chromosome_fittest_ring = xalloc(fittest_count * sizeof(char *));
+
+	/* replace this and the previous paragraph via realloc(3) */
+	for (i = 0, j = 0; i < POPULATION_SIZE; i++) {
+		if (entities[i]->fitness == fittest_value) {
+			chromosome_fittest_ring[j] = xalloc(strlen(target_text) + 1);
+			memcpy(&chromosome_fittest_ring[j], entities[i]->chromosome,
+					strlen(target_text));
+			j++;
+		}
+	}
+
+	/* FIXME:
+	 * we have a problem here: the current algorithm assume
+	 * that the fittest group had always more then one member. This is not
+	 * true at all. Therefore if fittest_count == 1 we need a parent from
+	 * a lower rated class -- HGN */
+	i = 0; last_parent_marker = 0;
+	while (1) {
+
+		int rval = rand() % fittest_count;
+		if (i == 1 && rval == last_parent_marker)
+			continue; /* we want unique parent - no dubplicates */
+
+		memcpy(top_chromosomes[i],
+				&chromosome_fittest_ring[rval], strlen(target_text) + 1);
+		if (i == 1) /* we got what we wanted */
+			break;
+
+		i++;
+		last_parent_marker = rval;
+	}
+}
+
+/* in opposite from select_best_first_two(), this method groups the fittest
+ * ones (with the same fitness value) into one group and randomly select two
+ * offsprings */
+void select_best_two_from_pool(struct entity **entities, char **top_chromosomes)
 {
 	uint16_t i, current_fittest[2][2] = { {0U, 0U}, {0U, 0U} };
 	char *fittest[2];
 
-	fittest[FIRST] = entities[0]->chromosome;
-	fittest[SECOND] = entities[1]->chromosome;
+	fittest[POS_FIRST] = entities[0]->chromosome;
+	fittest[POS_SECOND] = entities[1]->chromosome;
 
 	top_chromosomes[0] = xalloc(strlen(target_text) + 1);
 	top_chromosomes[1] = xalloc(strlen(target_text) + 1);
@@ -215,12 +258,12 @@ static void select_best_two(struct entity **entities, char **top_chromosomes)
 	for (i = 0; i < POPULATION_SIZE; i++) {
 		struct entity *entity = entities[i];
 
-		if (entity->fitness > current_fittest[FIRST][POS_VAL]) {
+		if (entity->fitness > current_fittest[POS_FIRST][POS_VALUE]) {
 
-			current_fittest[FIRST][POS_VAL]  = entity->fitness;
-			current_fittest[FIRST][POS_RANK] = i;
+			current_fittest[POS_FIRST][POS_VALUE]  = entity->fitness;
+			current_fittest[POS_FIRST][POS_RANK] = i;
 
-			fittest[FIRST] = entity->chromosome;
+			fittest[POS_FIRST] = entity->chromosome;
 
 			if (VERBOSE_LEVEL >= 2)
 				fprintf(stderr, "found new fittest(1): %s - values: %u\n",
@@ -232,16 +275,16 @@ static void select_best_two(struct entity **entities, char **top_chromosomes)
 	for (i = 0; i < POPULATION_SIZE; i++) {
 
 		/* prevent that we cross the some individuals */
-		if (i == current_fittest[FIRST][POS_RANK])
+		if (i == current_fittest[POS_FIRST][POS_RANK])
 			continue;
 
 		struct entity *entity = entities[i];
 
-		if (entity->fitness > current_fittest[SECOND][POS_VAL]) {
-			current_fittest[SECOND][POS_VAL]  = entity->fitness;
-			current_fittest[SECOND][POS_RANK] = i;
+		if (entity->fitness > current_fittest[POS_SECOND][POS_VALUE]) {
+			current_fittest[POS_SECOND][POS_VALUE]  = entity->fitness;
+			current_fittest[POS_SECOND][POS_RANK] = i;
 
-			fittest[SECOND] = entity->chromosome;
+			fittest[POS_SECOND] = entity->chromosome;
 
 			if (VERBOSE_LEVEL >= 2)
 				fprintf(stderr, "found new fittest(2): %s - values: %u\n",
@@ -249,9 +292,8 @@ static void select_best_two(struct entity **entities, char **top_chromosomes)
 		}
 	}
 
-	memcpy(top_chromosomes[0],  fittest[FIRST], strlen(target_text) + 1);
-	memcpy(top_chromosomes[1],  fittest[SECOND], strlen(target_text) + 1);
-
+	memcpy(top_chromosomes[0],  fittest[POS_FIRST], strlen(target_text) + 1);
+	memcpy(top_chromosomes[1],  fittest[POS_SECOND], strlen(target_text) + 1);
 }
 
 static void free_best_two(char **top_chromosomes)
@@ -293,11 +335,24 @@ static char *crossover_two_point(char *p1, char *p2)
 
 static char *crossover_uniform(char *p1, char *p2)
 {
+	uint16_t i;
 	char *offspring;
 
-	(void) p1; (void) p2;
-
 	offspring = xalloc(strlen(target_text) + 1);
+
+	for (i = 0; i < strlen(target_text); i++) {
+
+		if (rand() % 2 == 0) {
+			/* took p1 as descent */
+			offspring[i] = p1[i];
+		} else {
+			/* took p2 as descent */
+			offspring[i] = p2[i];
+		}
+	}
+
+	fprintf(stderr, "\t\t\tp1: %s p2: %s - mutant: %s\n", p1, p2, offspring);
+
 	return offspring;
 }
 
@@ -338,42 +393,36 @@ static char *init_crossover(char *p1, char *p2)
 	}
 }
 
-#define	PERCENTAL_MUTATION_MAX 10
 
-static void init_mutation(char *offspring)
+static void close_all_open_fds(void)
 {
-	uint16_t j;
-	int percental_mutation;
+	int i;
 
-	percental_mutation = rand() % PERCENTAL_MUTATION_MAX;
-
-	/* FIXME: implement this ;) */
-	for (j = 0; j < strlen(target_text); j++) {
-
-		if (rand() % 2 == 0) {
-			if (rand() % 1 == 0) {
-				offspring[j] += 1;
-				if (offspring[j] > 122) {
-					offspring[j] = 122;
-				}
-			} else {
-				offspring[j] -= 1;
-				if (offspring[j] < 97) {
-					offspring[j] = 97;
-				}
-			}
-		}
-	}
-
-	if (VERBOSE_LEVEL >= 1)
-		fprintf(stdout, "mutated offspring: %s\n", offspring);
+	for (i = 0; i < 128; i++)
+		close(i);
 }
-
 
 int main(void)
 {
+
+	struct population_pool *population_pool;
+
+	init_random_seed();
+
+	population_pool = alloc_population_pool();
+	breed_initial_population(population_pool, POPULATION_SIZE);
+
+	return 0;
+}
+
+
+int mainold(void)
+{
 	struct entity **entities;
 	char *top_chromosomes[2];
+
+	if (VERBOSE_LEVEL <= 0)
+		close_all_open_fds();
 
 	init_random_seed();
 
@@ -388,7 +437,7 @@ int main(void)
 	while (1) {
 
 		/* Select best-ranking individuals to reproduce */
-		select_best_two(entities, top_chromosomes);
+		select_best_first_two(entities, top_chromosomes);
 		if (VERBOSE_LEVEL >= 1)
 			fprintf(stderr, "1:  %s  2: %s \n", top_chromosomes[0], top_chromosomes[1]);
 

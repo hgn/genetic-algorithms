@@ -1,4 +1,5 @@
 
+OBJ= cfga.o mutation.o rbtree.o crossover.o population.o fitness.o
 
 .SUFFIXES:
 .SUFFIXES: .c .o
@@ -10,8 +11,8 @@ LIBS = -lm
 %.o : %.c
 	$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
 
-all: cfga.o
-	$(CC) $(CFLAGS) -o cfga cfga.o
+all: $(OBJ)
+	$(CC) $(CFLAGS) -o cfga $(OBJ)
 
 clean:
 	-rm -f *.o *~ core cfga
