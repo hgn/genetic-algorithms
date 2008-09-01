@@ -47,6 +47,7 @@ struct rb_root
 	struct rb_node *rb_node;
 };
 
+
 struct chromosome {
 	struct list_head list;
 	uint32_t fitness;
@@ -82,7 +83,12 @@ uint32_t calculate_chromosome_fitness(struct chromosome *);
 int lhi_get_rbtree(struct population_pool *, const uint32_t, struct population_group **);
 int lhi_remove_rbtree(struct population_pool *, const uint32_t, struct population_group **);
 int lhi_insert_rbtree(struct population_pool *, const uint32_t, struct population_group *);
+void print_population_fitness(struct population_pool *);
 
+struct rb_node *rb_first(struct rb_root *);
+struct rb_node *rb_last(struct rb_root *);
+struct rb_node *rb_next(struct rb_node *);
+struct rb_node *rb_prev(struct rb_node *);
 
 #endif /* CFGA_H_ */
 

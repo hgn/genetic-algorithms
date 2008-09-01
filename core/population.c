@@ -232,6 +232,17 @@ int add_chromosome_into_popolation(struct population_pool *population_pool,
 		return 0;
 }
 
+void print_population_fitness(struct population_pool *population_pool)
+{
+	struct population_group *node;
+	for (node = rb_first(population_pool); node; node = rb_next(node)) {
+		struct population_group *population_group =
+			rb_entry(node, struct population_group, node);
+		fprintf(stdout, "fitness: %u, quantity: %u\n",
+				population_group->fitness, population_group->chromosome_quantity);
+	}
+}
+
 struct chromosome** get_two_fittest_chromosomes_from_population(
 		struct chromosome *chromosome, struct population_pool *population_pool)
 {

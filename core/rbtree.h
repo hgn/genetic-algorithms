@@ -67,7 +67,6 @@ static inline void rb_link_node(struct rb_node * node, struct rb_node * parent,
 	*rb_link = node;
 }
 
-
 #endif /* LIBHASHISH_LIST_H_ */
 
 /* vim: set tw=78 ts=4 sw=4 sts=4 ff=unix noet: */

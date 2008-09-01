@@ -410,7 +410,11 @@ int main(void)
 	init_random_seed();
 
 	population_pool = alloc_population_pool();
+
+	/* breed and eval new population */
 	breed_initial_population(population_pool, POPULATION_SIZE);
+
+	print_population_fitness(population_pool);
 
 	return 0;
 }
