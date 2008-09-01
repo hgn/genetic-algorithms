@@ -47,6 +47,11 @@ struct rb_root
 	struct rb_node *rb_node;
 };
 
+enum select_strategy {
+	SELECT_RANDOM = 1,
+	SELECT_BEST
+};
+
 
 struct chromosome {
 	struct list_head list;
@@ -62,6 +67,8 @@ struct population_group {
 	struct list_head list;
 	uint32_t chromosome_quantity;
 };
+
+
 
 /* this is the data structure where *all* population_groups are stored */
 struct population_pool {
@@ -84,6 +91,8 @@ int lhi_get_rbtree(struct population_pool *, const uint32_t, struct population_g
 int lhi_remove_rbtree(struct population_pool *, const uint32_t, struct population_group **);
 int lhi_insert_rbtree(struct population_pool *, const uint32_t, struct population_group *);
 void print_population_fitness(struct population_pool *);
+
+int select_n_parents(struct population_pool *, uint32_t, enum select_strategy, struct chromosome **);
 
 struct rb_node *rb_first(struct rb_root *);
 struct rb_node *rb_last(struct rb_root *);

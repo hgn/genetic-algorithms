@@ -465,3 +465,4 @@ struct rb_node *rb_prev(struct rb_node *node)
 	return parent;
 }
 
+/* vi: set tw=78 sw=4 ts=4 sts=4 ff=unix noet: */

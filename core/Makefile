@@ -1,5 +1,5 @@
 
-OBJ= cfga.o mutation.o rbtree.o crossover.o population.o fitness.o
+OBJ= cfga.o mutation.o rbtree.o crossover.o population.o fitness.o parents.o
 
 .SUFFIXES:
 .SUFFIXES: .c .o

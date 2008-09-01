@@ -250,6 +250,4 @@ struct chromosome** get_two_fittest_chromosomes_from_population(
 }
 
 
-
-
 /* vi: set tw=78 sw=4 ts=4 sts=4 ff=unix noet: */
