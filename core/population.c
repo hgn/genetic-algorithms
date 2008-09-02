@@ -39,6 +39,7 @@ struct population_pool* alloc_population_pool(void)
 
 	ret->root = RB_ROOT;
 	ret->cmp = compare_uint32_keys;
+	ret->count = 0;
 
 	return ret;
 }
@@ -120,7 +121,11 @@ struct chromosome* remove_chromosome_from_population(
 			exit(1);
 		}
 		free_population_group(population_group);
+	} else {
+		population_group->chromosome_quantity--;
 	}
+
+	population_pool->count--;
 
 	return iterator;
 }
@@ -216,7 +221,6 @@ int add_chromosome_into_popolation(struct population_pool *population_pool,
 			if (iret < 0) {
 				fprintf(stderr, "Can't insert population group into population pool\n");
 			}
-			fprintf(stderr, "group address: %p\n", population_group);
 		} else {
 			/* population group with fitness already in
 			 * population_pool present */
@@ -228,6 +232,8 @@ int add_chromosome_into_popolation(struct population_pool *population_pool,
 			}
 			fprintf(stderr, "group address: %p\n", population_group);
 		}
+
+		population_pool->count++;
 
 		return 0;
 }
@@ -241,13 +247,9 @@ void print_population_fitness(struct population_pool *population_pool)
 		fprintf(stdout, "fitness: %u, quantity: %u\n",
 				population_group->fitness, population_group->chromosome_quantity);
 	}
+	fprintf(stdout, " [cumulative chromosomes: %u]\n", population_pool->count);
 }
 
-struct chromosome** get_two_fittest_chromosomes_from_population(
-		struct chromosome *chromosome, struct population_pool *population_pool)
-{
-
-}
 
 
 /* vi: set tw=78 sw=4 ts=4 sts=4 ff=unix noet: */

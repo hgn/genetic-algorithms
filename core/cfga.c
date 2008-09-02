@@ -67,29 +67,6 @@ static void init_random_seed(void)
 	srand(new_seed);
 }
 
-static void gen_initial_population(struct entity ***eep)
-{
-	uint16_t i, j;
-
-	struct entity **entities = xalloc(sizeof(struct entity *) * POPULATION_SIZE);
-
-	for (j = 0; j < POPULATION_SIZE; j++) {
-
-		entities[j] = xalloc(sizeof(struct entity));
-
-		/* allocate string mem */
-		entities[j]->chromosome = xalloc(strlen(target_text) + 1);
-
-		for (i = 0; i < strlen(target_text); i++)
-			entities[j]->chromosome[i] = (((int)rand()) % (122 - 97 + 1)) + 97;
-
-		if (VERBOSE_LEVEL >= 2)
-			fprintf(stdout, "new chromosome %u: %s\n", j, entities[j]->chromosome);
-	}
-
-	*eep = entities;
-}
-
 static void replace_worst_with_offspring(struct entity **entities,
 		char *offspring, uint16_t fitness)
 {
@@ -118,26 +95,6 @@ static void replace_worst_with_offspring(struct entity **entities,
 	memcpy(unfittest->chromosome, offspring, strlen(target_text));
 	unfittest->fitness = fitness;
 
-}
-
-static void eval_each_individual(struct entity **entities)
-{
-	uint16_t i, j;
-
-	for (i = 0; i < POPULATION_SIZE; i++) {
-
-		struct entity *entity = entities[i];
-
-		/* reset fitness */
-		entity->fitness = 0;
-
-		/* loop over chromosome */
-		for (j = 0; j < strlen(target_text); j++) {
-			if (entity->chromosome[j] == target_text[j]) {
-				entity->fitness += 1;
-			}
-		}
-	}
 }
 
 static uint16_t calc_offspring_fitness(char *offspring)
@@ -427,15 +384,6 @@ int mainold(void)
 
 	if (VERBOSE_LEVEL <= 0)
 		close_all_open_fds();
-
-	init_random_seed();
-
-	/* Choose initial population */
-	gen_initial_population(&entities);
-
-	/* Evaluate the fitness of each individual in the population */
-	eval_each_individual(entities);
-	print_current_fittest(entities);
 
 	/* Repeat until termination */
 	while (1) {

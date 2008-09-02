@@ -74,6 +74,7 @@ struct population_group {
 struct population_pool {
 	struct rb_root root;
 	int (*cmp)(uint32_t, uint32_t);
+	uint32_t count;
 };
 
 void init_mutation(char *);
