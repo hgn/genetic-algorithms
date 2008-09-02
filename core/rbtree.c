@@ -303,8 +303,6 @@ int lhi_get_rbtree(struct population_pool *population_pool,
 
 		lhi_entry = rb_entry(parent, struct population_group, node);
 
-		fprintf(stderr, "traversal - search %u, currently %u\n", fitness, lhi_entry->fitness);
-
 		diff = population_pool->cmp(fitness, lhi_entry->fitness);
 		if (diff == 0) {
 			*res = (void *) lhi_entry;

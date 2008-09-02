@@ -128,7 +128,6 @@ static void print_current_fittest(struct entity **entities)
 		}
 	}
 
-	fprintf(stderr, "current fittest: %s (%u)\n", fittest, current_fittest);
 }
 
 #define	POS_FIRST  0
@@ -159,8 +158,6 @@ static void select_best_first_two(struct entity **entities, char **top_chromosom
 			fittest_count++;
 	}
 
-	if (VERBOSE_LEVEL >= 2)
-		fprintf(stderr, "found %u fittest\n", fittest_count);
 
 	chromosome_fittest_ring = xalloc(fittest_count * sizeof(char *));
 
@@ -222,9 +219,6 @@ void select_best_two_from_pool(struct entity **entities, char **top_chromosomes)
 
 			fittest[POS_FIRST] = entity->chromosome;
 
-			if (VERBOSE_LEVEL >= 2)
-				fprintf(stderr, "found new fittest(1): %s - values: %u\n",
-						entity->chromosome, entity->fitness);
 		}
 	}
 
@@ -243,9 +237,6 @@ void select_best_two_from_pool(struct entity **entities, char **top_chromosomes)
 
 			fittest[POS_SECOND] = entity->chromosome;
 
-			if (VERBOSE_LEVEL >= 2)
-				fprintf(stderr, "found new fittest(2): %s - values: %u\n",
-						entity->chromosome, entity->fitness);
 		}
 	}
 
@@ -290,16 +281,7 @@ int main(void)
 		select_n_parents(population_pool, 2, SELECT_BEST, &c);
 
 
-#if 0
-		int i;
-		for (i = 0; i < 2; i++) {
-			fprintf(stderr, "%s\n", c[i]->chromosome);
-		}
-#endif
 		do_crossover_and_mutation(c, 2, &offspring);
-
-		fprintf(stderr, "p1: %s p2: %s offspring: %s\n", c[0]->chromosome, c[1]->chromosome, offspring->chromosome);
-
 
 		if (!strcmp(offspring->chromosome, target_text)) {
 			fprintf(stderr, "Found match: %s - %s\n", offspring->chromosome, target_text);
@@ -308,11 +290,11 @@ int main(void)
 
 		/* evaluate the individual fitnesses of the offspring */
 		uint32_t fitness = calc_offspring_fitness(offspring->chromosome);
-		fprintf(stdout, "offspring fitness: %u\n", fitness);
 
 		remove_worst_from_population(population_pool);
 
 		add_chromosome_into_popolation(population_pool, offspring);
+		print_population_fitness(population_pool);
 
 	}
 

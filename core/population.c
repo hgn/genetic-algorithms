@@ -85,38 +85,31 @@ int breed_initial_population(struct population_pool *population_pool,
 int remove_worst_from_population(struct population_pool *population_pool)
 {
 	struct population_group *node;
-
-
+	struct chromosome *iterator;
+	int random_drop;
 
 	for (node = rb_last(population_pool); node; node = rb_next(node)) {
 
-		struct chromosome *iterator;
 		struct population_group *population_group = rb_entry(node, struct population_group, node);
 
-		list_for_each_entry(iterator, &population_group->list, list) {
-
-			fprintf(stderr, "Remove worst chromosome: %s (fitness: %d)\n",
-					iterator->chromosome, iterator->fitness);
-
-			list_del(&iterator->list);
-			free(iterator->chromosome);
-			free(iterator);
-
-			population_group->chromosome_quantity--;
-			if (population_group->chromosome_quantity == 0) {
-
-				struct population_group *pgr;
-
-				lhi_remove_rbtree(population_pool, population_group->fitness, &pgr);
-				free(population_group);
-			}
-			return SUCCESS;
+		if (population_group->chromosome_quantity <= 0) {
+			die("Programmed error - more then as 0 chromosomes expected");
 		}
+
+		random_drop = rand() % population_group->chromosome_quantity;
+
+		list_for_each_entry(iterator, &population_group->list, list) {
+			if (!random_drop--)
+				goto out;
+		}
+
 	}
+out:
+	remove_chromosome_from_population(iterator, population_pool);
 }
 
 
-struct chromosome* remove_chromosome_from_population(
+int remove_chromosome_from_population(
 		struct chromosome *chromosome, struct population_pool *population_pool)
 {
 	uint32_t fitness; int ret;
@@ -142,6 +135,8 @@ struct chromosome* remove_chromosome_from_population(
 		}
 		if (found_match) {
 			list_del(&iterator->list);
+			free(iterator->chromosome);
+			free(iterator);
 		}
 	}
 
@@ -160,7 +155,7 @@ struct chromosome* remove_chromosome_from_population(
 
 	population_pool->count--;
 
-	return iterator;
+	return SUCCESS;
 }
 
 struct population_group* alloc_population_group(void)
@@ -182,34 +177,20 @@ int add_chromosome_into_popolation_group(struct population_group *population_gro
 	struct chromosome *iterator;
 
 	if (population_group->fitness != chromosome->fitness) {
-		fprintf(stderr, "Internal error: fittnes differs!\n");
+		fprintf(stderr, "Internal error: fitness differs!\n");
 		exit(1);
-	}
-
-	/* search if chromosome is already in list */
-	list_for_each_entry(iterator, &population_group->list, list) {
-		uint32_t i; int found_match = 1;
-
-		for (i = 0; i < strlen(target_text); i++) {
-			if (iterator->chromosome[i] != target_text[i])
-				found_match = 0;
-		}
-		if (found_match) {
-			/* element already in list - give a warning cause there can
-			 * be a possibilty that to genoms are equals -- right? ;) */
-			fprintf(stderr, "WARNING: chromosome already in list!\n");
-		}
 	}
 
 	/* add to list */
 	list_add_tail(&(chromosome->list), &(population_group->list));
-	population_group->chromosome_quantity++;
 
-	fprintf(stderr, "chromosome_quantity for fitness level %u: %u\n",
-			population_group->fitness, population_group->chromosome_quantity);
+	population_group->chromosome_quantity++;
 }
 
-int add_popolation_group_into_population_pool(struct population_pool *population_pool,
+/**
+ * Hidden interface, only called from add_chromosome_into_popolation()
+ */
+static int add_popolation_group_into_population_pool(struct population_pool *population_pool,
 		struct population_group *population_group)
 {
 	int ret;
@@ -249,6 +230,7 @@ int add_chromosome_into_popolation(struct population_pool *population_pool,
 			if (iret < 0) {
 				fprintf(stderr, "Can't insert chromosome into population group\n");
 			}
+
 			iret = add_popolation_group_into_population_pool(population_pool,
 					population_group);
 			if (iret < 0) {
@@ -256,14 +238,14 @@ int add_chromosome_into_popolation(struct population_pool *population_pool,
 			}
 		} else {
 			/* population group with fitness already in
-			 * population_pool present */
+			 * population_pool present, so we add only the chromosome
+			 * into the proper group */
 			int iret;
 
 			iret = add_chromosome_into_popolation_group(population_group, chromosome);
 			if (iret < 0) {
 				fprintf(stderr, "Can't insert chromosome into population group\n");
 			}
-			fprintf(stderr, "group address: %p\n", population_group);
 		}
 
 		population_pool->count++;

@@ -33,9 +33,6 @@ static char *crossover_single_point(char *p1, char *p2)
 	memcpy(offspring, p1, border);
 	memcpy(&offspring[border], &p2[border], strlen(target_text) - border);
 
-	if (VERBOSE_LEVEL >= 1)
-		fprintf(stderr, "new offspring: %s (p1: %s, p2: %s, border %u)\n",
-				offspring, p1, p2, border);
 
 	return offspring;
 }
@@ -69,8 +66,6 @@ static char *crossover_uniform(char *p1, char *p2)
 			offspring[i] = p2[i];
 		}
 	}
-
-	fprintf(stderr, "\t\t\tp1: %s p2: %s - mutant: %s\n", p1, p2, offspring);
 
 	return offspring;
 }

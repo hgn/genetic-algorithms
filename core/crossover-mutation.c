@@ -41,6 +41,7 @@ int do_crossover_and_mutation(struct chromosome **parents,
 	}
 
 	/* mutation */
+	init_mutation(rc->chromosome);
 
 	*offspring = rc;
 	return ret;

@@ -46,9 +46,6 @@ void init_mutation(char *offspring)
 			}
 		}
 	}
-
-	if (VERBOSE_LEVEL >= 1)
-		fprintf(stdout, "mutated offspring: %s\n", offspring);
 }
 
 

@@ -38,7 +38,7 @@
 #define	ARITHMETIC_CROSSOVER   4
 #define	BINARY_ENCODING_CROSSOVER_MODE UNIFORM_CROSSOVER
 
-#define	POPULATION_SIZE 200
+#define	POPULATION_SIZE 1000
 
 #define	VERBOSE_LEVEL 2
 
@@ -95,6 +95,7 @@ int lhi_get_rbtree(struct population_pool *, const uint32_t, struct population_g
 int lhi_remove_rbtree(struct population_pool *, const uint32_t, struct population_group **);
 int lhi_insert_rbtree(struct population_pool *, const uint32_t, struct population_group *);
 void print_population_fitness(struct population_pool *);
+int remove_chromosome_from_population(struct chromosome *, struct population_pool *);
 
 int select_n_parents(struct population_pool *, uint32_t, enum select_strategy, struct chromosome **);
 

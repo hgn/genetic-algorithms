@@ -42,14 +42,9 @@ static int grap_n_randomly(struct population_group *node, uint32_t ptr,
 		int already_in_pool = 0;
 
 		randret = rand() % node->chromosome_quantity;
-			fprintf(stderr, "rand: %d\n", randret);
-
 		list_for_each_entry(iterator, &node->list, list) {
 
-
-
 			if (randret-- <= 0) {
-				fprintf(stderr, "XXX 2\n");
 				/* we didn't found the string in the local pool, so copy */
 				memcpy(&c[ptr]->chromosome, &iterator->chromosome, strlen(iterator->chromosome) + 1);
 				ptr++;
@@ -98,12 +93,11 @@ static int select_best_n_parents(
 
 			struct population_group *population_group = rb_entry(node, struct population_group, node);
 
-			if (population_group->chromosome_quantity >= still_required) {
+			if (population_group->chromosome_quantity > still_required) {
 				/* fine, all chromosomes are in one vertice, grap
 				 * randomly */
 				grap_n_randomly(population_group, ptr, still_required, ret_chromo);
 
-				fprintf(stderr, "new parents p1: %s p2: %s\n", ret_chromo[0]->chromosome, ret_chromo[1]->chromosome);
 
 				/* we got all we want -> break out */
 				goto out;
@@ -115,7 +109,6 @@ static int select_best_n_parents(
 					ptr++;
 					still_required--;
 					if (still_required == 0) {
-						fprintf(stderr, "new parents p1: %s p2: %s\n", ret_chromo[0]->chromosome, ret_chromo[1]->chromosome);
 						goto out;
 					}
 				}
