@@ -1,11 +1,11 @@
 
-OBJ= cfga.o mutation.o rbtree.o crossover.o population.o fitness.o parents.o
+OBJ= cfga.o mutation.o rbtree.o crossover.o population.o fitness.o parents.o crossover-mutation.o
 
 .SUFFIXES:
 .SUFFIXES: .c .o
 
 CC = gcc
-CFLAGS = -Wall -W -pipe -O3 -Wwrite-strings -Wsign-compare -Wshadow -Wformat=2
+CFLAGS = -Wall -W -pipe -g -Wwrite-strings -Wsign-compare -Wshadow -Wformat=2
 LIBS = -lm
 
 %.o : %.c

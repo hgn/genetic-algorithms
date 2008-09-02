@@ -259,97 +259,6 @@ static void free_best_two(char **top_chromosomes)
 	free(top_chromosomes[1]);
 }
 
-static char *crossover_single_point(char *p1, char *p2)
-{
-	uint16_t border;
-	char *offspring;
-	offspring = xalloc(strlen(target_text) + 1);
-
-	/* get some random border between 0 and strlen(target_text) */
-	border = rand() % strlen(target_text);
-
-	memcpy(offspring, p1, border);
-	memcpy(&offspring[border], &p2[border], strlen(target_text) - border);
-
-	if (VERBOSE_LEVEL >= 1)
-		fprintf(stderr, "new offspring: %s (p1: %s, p2: %s, border %u)\n",
-				offspring, p1, p2, border);
-
-	return offspring;
-}
-
-
-static char *crossover_two_point(char *p1, char *p2)
-{
-	char *offspring;
-
-	(void) p1; (void) p2;
-
-	offspring = xalloc(strlen(target_text) + 1);
-	return offspring;
-}
-
-
-static char *crossover_uniform(char *p1, char *p2)
-{
-	uint16_t i;
-	char *offspring;
-
-	offspring = xalloc(strlen(target_text) + 1);
-
-	for (i = 0; i < strlen(target_text); i++) {
-
-		if (rand() % 2 == 0) {
-			/* took p1 as descent */
-			offspring[i] = p1[i];
-		} else {
-			/* took p2 as descent */
-			offspring[i] = p2[i];
-		}
-	}
-
-	fprintf(stderr, "\t\t\tp1: %s p2: %s - mutant: %s\n", p1, p2, offspring);
-
-	return offspring;
-}
-
-
-static char *crossover_arithmetic(char *p1, char *p2)
-{
-	char *offspring;
-
-	(void) p1; (void) p2;
-
-	offspring = xalloc(strlen(target_text) + 1);
-	return offspring;
-}
-
-
-static char *init_crossover(char *p1, char *p2)
-{
-
-	/* see http://www.obitko.com/tutorials/genetic-algorithms/crossover-mutation.php
-	 * for the definition of the crossover modes */
-
-	switch (BINARY_ENCODING_CROSSOVER_MODE) {
-		case SINGLE_POINT_CROSSOVER:
-			return crossover_single_point(p1, p2);
-			break;
-		case TWO_POINT_CROSSOVER:
-			return crossover_two_point(p1, p2);
-			break;
-		case UNIFORM_CROSSOVER:
-			return crossover_uniform(p1, p2);
-			break;
-		case ARITHMETIC_CROSSOVER:
-			return crossover_arithmetic(p1, p2);
-			break;
-		default:
-			die("Programmed error in switch/case statement");
-			break;
-	}
-}
-
 
 static void close_all_open_fds(void)
 {
@@ -362,6 +271,7 @@ static void close_all_open_fds(void)
 int main(void)
 {
 
+	struct chromosome **c;
 	struct population_pool *population_pool;
 
 	init_random_seed();
@@ -373,51 +283,43 @@ int main(void)
 
 	print_population_fitness(population_pool);
 
-	return 0;
-}
-
-
-int mainold(void)
-{
-	struct entity **entities;
-	char *top_chromosomes[2];
-
-	if (VERBOSE_LEVEL <= 0)
-		close_all_open_fds();
-
-	/* Repeat until termination */
 	while (1) {
 
-		/* Select best-ranking individuals to reproduce */
-		select_best_first_two(entities, top_chromosomes);
-		if (VERBOSE_LEVEL >= 1)
-			fprintf(stderr, "1:  %s  2: %s \n", top_chromosomes[0], top_chromosomes[1]);
+		struct chromosome *offspring;
 
-		/* Breed new generation through crossover and mutation (genetic
-		 * operations) and give birth to offspring
-		 */
-		char *offspring = init_crossover(top_chromosomes[0], top_chromosomes[1]);
+		select_n_parents(population_pool, 2, SELECT_BEST, &c);
 
-		if (!strcmp(offspring, target_text)) {
-			fprintf(stderr, "found target\n");
+
+#if 0
+		int i;
+		for (i = 0; i < 2; i++) {
+			fprintf(stderr, "%s\n", c[i]->chromosome);
+		}
+#endif
+		do_crossover_and_mutation(c, 2, &offspring);
+
+		fprintf(stderr, "p1: %s p2: %s offspring: %s\n", c[0]->chromosome, c[1]->chromosome, offspring->chromosome);
+
+
+		if (!strcmp(offspring->chromosome, target_text)) {
+			fprintf(stderr, "Found match: %s - %s\n", offspring->chromosome, target_text);
 			exit(0);
 		}
 
-		init_mutation(offspring);
-
 		/* evaluate the individual fitnesses of the offspring */
-		uint16_t fitness = calc_offspring_fitness(offspring);
+		uint32_t fitness = calc_offspring_fitness(offspring->chromosome);
 		fprintf(stdout, "offspring fitness: %u\n", fitness);
 
-		replace_worst_with_offspring(entities, offspring, fitness);
+		remove_worst_from_population(population_pool);
 
-		free_best_two(top_chromosomes);
-		free(offspring);
+		add_chromosome_into_popolation(population_pool, offspring);
+
 	}
-
 
 	return 0;
 }
+
+
 
 
 

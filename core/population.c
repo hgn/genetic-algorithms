@@ -82,6 +82,39 @@ int breed_initial_population(struct population_pool *population_pool,
 	return ret;
 }
 
+int remove_worst_from_population(struct population_pool *population_pool)
+{
+	struct population_group *node;
+
+
+
+	for (node = rb_last(population_pool); node; node = rb_next(node)) {
+
+		struct chromosome *iterator;
+		struct population_group *population_group = rb_entry(node, struct population_group, node);
+
+		list_for_each_entry(iterator, &population_group->list, list) {
+
+			fprintf(stderr, "Remove worst chromosome: %s (fitness: %d)\n",
+					iterator->chromosome, iterator->fitness);
+
+			list_del(&iterator->list);
+			free(iterator->chromosome);
+			free(iterator);
+
+			population_group->chromosome_quantity--;
+			if (population_group->chromosome_quantity == 0) {
+
+				struct population_group *pgr;
+
+				lhi_remove_rbtree(population_pool, population_group->fitness, &pgr);
+				free(population_group);
+			}
+			return SUCCESS;
+		}
+	}
+}
+
 
 struct chromosome* remove_chromosome_from_population(
 		struct chromosome *chromosome, struct population_pool *population_pool)

@@ -77,6 +77,9 @@ struct population_pool {
 	uint32_t count;
 };
 
+#define	SUCCESS 0
+#define	FAILURE -1
+
 void init_mutation(char *);
 void *xalloc(size_t);
 void die(const char const *);
@@ -94,6 +97,8 @@ int lhi_insert_rbtree(struct population_pool *, const uint32_t, struct populatio
 void print_population_fitness(struct population_pool *);
 
 int select_n_parents(struct population_pool *, uint32_t, enum select_strategy, struct chromosome **);
+
+int do_crossover_and_mutation(struct chromosome **, uint32_t, struct chromosome **);
 
 struct rb_node *rb_first(struct rb_root *);
 struct rb_node *rb_last(struct rb_root *);
