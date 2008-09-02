@@ -259,7 +259,7 @@ static void close_all_open_fds(void)
 		close(i);
 }
 
-int main(void)
+int main(int argc, char **argv)
 {
 
 	struct chromosome **c;

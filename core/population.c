@@ -88,7 +88,7 @@ int remove_worst_from_population(struct population_pool *population_pool)
 	struct chromosome *iterator;
 	int random_drop;
 
-	for (node = rb_last(population_pool); node; node = rb_next(node)) {
+	for (node = rb_last((struct rb_root *)population_pool); node; node = rb_next((struct rb_node *)node)) {
 
 		struct population_group *population_group = rb_entry(node, struct population_group, node);
 

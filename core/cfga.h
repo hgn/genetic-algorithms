@@ -117,8 +117,8 @@ struct chromosome {
 /* a particular population with the same fitness value -
  * a population group */
 struct population_group {
-	uint32_t fitness;
 	struct rb_node node;
+	uint32_t fitness;
 	struct list_head list;
 	uint32_t chromosome_quantity;
 };
