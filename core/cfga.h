@@ -29,6 +29,61 @@
 #include <time.h>
 #include <sys/stat.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define	SUCCESS 0
+#define	FAILURE -1
+
+
+#ifdef DEBUG
+# include <stdio.h>
+# define DEBUGPRINTF( fmt, ... )  fprintf(stderr, "DEBUG: %s:%u - " fmt,  __FILE__, __LINE__, __VA_ARGS__)
+# define NDEBUG
+#include <assert.h>
+#else
+# define DEBUGPRINTF( fmt, ... )  do { } while(0)
+#endif
+
+
+/* Forces a function to be always inlined
+** 'must inline' - so that they get inlined even
+** if optimizing for size
+*/
+#undef __always_inline
+#if __GNUC_PREREQ (3,2)
+# define __always_inline __inline __attribute__ ((__always_inline__))
+#else
+# define __always_inline __inline
+#endif
+
+#if __GNUC__ >= 3
+#if !defined likely && !defined unlikely
+# define likely(x)   __builtin_expect(!!(x), 1)
+# define unlikely(x) __builtin_expect(!!(x), 0)
+#endif
+#endif
+
+#define ARRAY_SIZE(X) (sizeof(X) / sizeof((X)[0]))
+
+#define min(x,y) ({ \
+     typeof(x) _x = (x); \
+     typeof(y) _y = (y); \
+     (void) (&_x == &_y);        \
+     _x < _y ? _x : _y; })
+
+#define max(x,y) ({ \
+     typeof(x) _x = (x); \
+     typeof(y) _y = (y); \
+     (void) (&_x == &_y);        \
+     _x > _y ? _x : _y; })
+
+#define min_t(type,x,y) \
+  ({ type __x = (x); type __y = (y); __x < __y ? __x: __y; })
+#define max_t(type,x,y) \
+  ({ type __x = (x); type __y = (y); __x > __y ? __x: __y; })
+
 #include "rbtree.h"
 #include "list.h"
 
@@ -77,9 +132,6 @@ struct population_pool {
 	uint32_t count;
 };
 
-#define	SUCCESS 0
-#define	FAILURE -1
-
 void init_mutation(char *);
 void *xalloc(size_t);
 void die(const char const *);
@@ -105,6 +157,10 @@ struct rb_node *rb_first(struct rb_root *);
 struct rb_node *rb_last(struct rb_root *);
 struct rb_node *rb_next(struct rb_node *);
 struct rb_node *rb_prev(struct rb_node *);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* CFGA_H_ */
 
